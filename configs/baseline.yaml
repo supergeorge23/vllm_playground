@@ -1,0 +1,39 @@
+# Baseline inference configuration for RAG prefill-decode asymmetry study
+
+model:
+  name: "meta-llama/Meta-Llama-3-8B"
+  dtype: "bfloat16"  # or "float16"
+  max_model_len: 16384  # Maximum context length
+
+workload:
+  # RAG context lengths to test (in tokens)
+  context_lengths: [2048, 4096, 8192, 16384]
+  # User query length (approximate tokens)
+  query_length: 50
+  # Decode output length (tokens)
+  decode_length: 150
+  # Number of samples per context length
+  num_samples: 10
+
+inference:
+  # vLLM engine parameters
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
+  max_num_seqs: 256
+  enable_prefix_caching: false
+
+measurements:
+  # Metrics to collect
+  metrics:
+    - "ttft"  # Time to First Token
+    - "decode_throughput"  # tokens/sec
+    - "total_latency"  # Total request latency
+    - "gpu_memory"  # Peak GPU memory usage
+    - "prefill_time"  # Prefill phase time
+    - "decode_time"  # Decode phase time
+
+output:
+  results_dir: "results"
+  format: "jsonl"  # or "csv"
+  filename: "baseline_results.jsonl"
+

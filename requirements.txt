@@ -1,0 +1,14 @@
+# Core dependencies for RAG prefill-decode asymmetry study
+
+# vLLM for inference
+vllm>=0.6.0
+
+# Configuration
+pyyaml>=6.0
+
+# Hugging Face for model access
+huggingface-hub>=0.20.0
+
+# Utilities
+torch>=2.0.0
+
