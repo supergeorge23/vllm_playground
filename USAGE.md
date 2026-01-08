@@ -13,7 +13,22 @@ source .venv/bin/activate
 pip install pyyaml
 ```
 
-### 2. 生成测试数据
+### 2. 测试脚本功能
+
+```bash
+# 运行本地测试（测试 generate_rag_prompts.py）
+python scripts/test_generate_prompts.py
+```
+
+测试会验证：
+- 文件格式（JSONL）
+- 必需字段完整性
+- Prompt数量正确性
+- Prompt结构格式
+- 上下文长度近似值
+- Sample ID正确性
+
+### 3. 生成测试数据
 
 ```bash
 # 生成RAG prompts（可以在本地运行）
