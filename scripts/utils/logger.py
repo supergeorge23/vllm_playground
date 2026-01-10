@@ -36,7 +36,10 @@ def setup_logger(
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
-    # Clear any existing handlers
+    # Clear any existing handlers (close them first to avoid resource warnings)
+    for handler in logger.handlers[:]:
+        handler.close()
+        logger.removeHandler(handler)
     logger.handlers = []
     
     # Create formatters

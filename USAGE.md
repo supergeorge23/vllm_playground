@@ -18,15 +18,30 @@ pip install pyyaml
 ```bash
 # 运行本地测试（测试 generate_rag_prompts.py）
 python scripts/test_generate_prompts.py
+
+# 运行logger单元测试（测试日志系统）
+python scripts/utils/test_logger.py
 ```
 
-测试会验证：
+**generate_rag_prompts.py 测试** 会验证：
 - 文件格式（JSONL）
 - 必需字段完整性
 - Prompt数量正确性
 - Prompt结构格式
 - 上下文长度近似值
 - Sample ID正确性
+
+**logger.py 单元测试** 会验证：
+- Logger创建和配置
+- 日志文件创建和写入
+- 日志格式验证
+- 日志级别过滤
+- 控制台输出功能
+- 文件和控台输出分离
+- 辅助函数（log_separator, log_header, log_subheader）
+- get_logger函数
+- 多个logger实例的独立性
+- Unicode字符支持
 
 ### 3. 生成测试数据
 

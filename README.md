@@ -109,10 +109,27 @@ See `USAGE.md` for detailed instructions.
 
 ---
 
+## Testing
+
+Run unit tests to verify functionality:
+
+```bash
+# Test logger system
+python scripts/utils/test_logger.py
+
+# Test prompt generation
+python scripts/test_generate_prompts.py
+```
+
+See `USAGE.md` for detailed testing instructions.
+
+---
+
 ## Status
 
 - [x] Project structure and workflow framework
 - [x] Baseline benchmark implementation (Phase 1)
+- [x] Unified logger system with unit tests
 - [ ] Cloud GPU environment ready
 - [ ] Prefill–decode profiling (Phase 2)
 - [ ] System optimization experiments (Phase 3)
