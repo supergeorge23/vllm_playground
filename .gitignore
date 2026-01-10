@@ -13,6 +13,9 @@ env/
 results/
 data/*.jsonl
 data/*.csv
+
+# Logs
+logs/
 *.log
 
 # IDE

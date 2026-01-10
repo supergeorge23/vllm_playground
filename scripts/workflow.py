@@ -14,21 +14,34 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from scripts.utils.logger import setup_logger, log_header
+
+logger = setup_logger(__name__)
+
 
 def run_command(cmd: list, description: str) -> bool:
     """Run a command and handle errors."""
-    print(f"\n{'='*60}")
-    print(f"{description}")
-    print(f"{'='*60}")
-    print(f"Running: {' '.join(cmd)}")
+    log_header(logger, description)
+    logger.info(f"Running: {' '.join(cmd)}")
     
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    
+    # Log stdout and stderr
+    if result.stdout:
+        logger.debug(f"STDOUT:\n{result.stdout}")
+    if result.stderr:
+        logger.debug(f"STDERR:\n{result.stderr}")
     
     if result.returncode != 0:
-        print(f"Error: {description} failed with exit code {result.returncode}")
+        logger.error(f"{description} failed with exit code {result.returncode}")
+        if result.stderr:
+            logger.error(f"Error output: {result.stderr}")
         return False
     
-    print(f"✓ {description} completed successfully")
+    logger.info(f"✓ {description} completed successfully")
     return True
 
 
@@ -63,12 +76,18 @@ def main():
     
     args = parser.parse_args()
     
+    log_header(logger, "RAG Prefill-Decode Asymmetry Workflow")
+    logger.info(f"Configuration: {args.config}")
+    logger.info(f"Phase: {args.phase}")
+    
     # Phase 1: Baseline Inference
     if args.phase in ["1", "all"]:
+        logger.info("Starting Phase 1: Baseline Inference")
+        
         # Generate prompts if needed
         if not args.skip_prompt_generation:
             if not args.prompts.exists():
-                print("Generating RAG prompts...")
+                logger.info("Generating RAG prompts...")
                 generate_cmd = [
                     sys.executable,
                     "scripts/generate_rag_prompts.py",
@@ -87,14 +106,17 @@ def main():
                     generate_cmd.extend([
                         "--num-samples", str(config["workload"]["num_samples"])
                     ])
+                    logger.debug(f"Loaded config: context_lengths={config['workload']['context_lengths']}, "
+                               f"num_samples={config['workload']['num_samples']}")
                 except Exception as e:
-                    print(f"Warning: Could not load config for prompt generation: {e}")
-                    print("Using default parameters")
+                    logger.warning(f"Could not load config for prompt generation: {e}")
+                    logger.info("Using default parameters")
                 
                 if not run_command(generate_cmd, "Generate RAG prompts"):
+                    logger.error("Failed to generate prompts. Exiting.")
                     sys.exit(1)
             else:
-                print(f"Using existing prompts: {args.prompts}")
+                logger.info(f"Using existing prompts: {args.prompts}")
         
         # Run baseline inference
         baseline_cmd = [
@@ -105,21 +127,22 @@ def main():
         ]
         
         if not run_command(baseline_cmd, "Run baseline inference benchmark"):
+            logger.error("Baseline inference failed. Exiting.")
             sys.exit(1)
+        
+        logger.info("Phase 1 completed successfully")
     
     # Phase 2: Profiling (placeholder)
     if args.phase in ["2", "all"]:
-        print("\nPhase 2: Prefill/Decode Profiling")
-        print("(Not yet implemented)")
+        logger.info("Phase 2: Prefill/Decode Profiling")
+        logger.warning("Phase 2 not yet implemented")
     
     # Phase 3: System Optimization (placeholder)
     if args.phase in ["3", "all"]:
-        print("\nPhase 3: System Optimization")
-        print("(Not yet implemented)")
+        logger.info("Phase 3: System Optimization")
+        logger.warning("Phase 3 not yet implemented")
     
-    print("\n" + "="*60)
-    print("Workflow completed!")
-    print("="*60)
+    log_header(logger, "Workflow completed!")
 
 
 if __name__ == "__main__":

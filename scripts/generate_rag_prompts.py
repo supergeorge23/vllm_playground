@@ -11,8 +11,16 @@ Creates prompts with:
 import argparse
 import json
 import random
+import sys
 from pathlib import Path
 from typing import List, Dict
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from scripts.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def generate_rag_context(length_tokens: int) -> str:
@@ -82,9 +90,13 @@ def generate_prompts(
     output_path: Path
 ) -> None:
     """Generate RAG prompts for all specified context lengths."""
+    logger.info(f"Generating prompts for context lengths: {context_lengths}")
+    logger.info(f"Number of samples per length: {num_samples}")
+    
     prompts = []
     
     for ctx_len in context_lengths:
+        logger.debug(f"Generating prompts for context length: {ctx_len} tokens")
         for sample_idx in range(num_samples):
             context = generate_rag_context(ctx_len)
             query = generate_query()
@@ -96,6 +108,9 @@ def generate_prompts(
                 "prompt": prompt,
                 "query": query,
             })
+            
+            if (sample_idx + 1) % 10 == 0:
+                logger.debug(f"Generated {sample_idx + 1}/{num_samples} samples for {ctx_len} tokens")
     
     # Save to JSONL
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -103,9 +118,9 @@ def generate_prompts(
         for prompt in prompts:
             f.write(json.dumps(prompt) + "\n")
     
-    print(f"Generated {len(prompts)} prompts saved to {output_path}")
-    print(f"Context lengths: {context_lengths}")
-    print(f"Samples per length: {num_samples}")
+    logger.info(f"Generated {len(prompts)} prompts saved to {output_path}")
+    logger.info(f"Context lengths: {context_lengths}")
+    logger.info(f"Samples per length: {num_samples}")
 
 
 if __name__ == "__main__":

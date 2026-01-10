@@ -85,6 +85,33 @@ python scripts/run_baseline.py \
 rsync -av user@<lambda-host>:/path/to/project/results/ ./results/
 ```
 
+## 日志系统
+
+所有脚本都使用统一的logger系统，输出到控制台和日志文件：
+
+- **日志文件位置**: `logs/` 目录
+- **日志格式**: 包含时间戳、日志级别、模块名和消息
+- **日志级别**: 可通过配置文件设置（DEBUG, INFO, WARNING, ERROR）
+
+配置文件中的日志设置（`configs/baseline.yaml`）：
+```yaml
+logging:
+  log_dir: "logs"
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  console: true  # 是否输出到控制台
+  file: true     # 是否输出到文件
+```
+
+在云端运行时，可以通过以下方式查看日志：
+```bash
+# 查看实时日志
+tail -f logs/*.log
+
+# 查看最新的日志文件
+ls -lt logs/ | head -5
+cat logs/<latest_log_file>.log
+```
+
 ## 配置文件说明
 
 编辑 `configs/baseline.yaml` 来调整实验参数：
@@ -93,6 +120,7 @@ rsync -av user@<lambda-host>:/path/to/project/results/ ./results/
 - `num_samples`: 每个上下文长度的样本数
 - `decode_length`: 解码输出长度
 - `gpu_memory_utilization`: GPU内存使用率
+- `logging`: 日志配置（目录、级别、输出目标）
 
 ## 结果格式
 

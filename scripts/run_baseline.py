@@ -12,16 +12,25 @@ Measures:
 
 import argparse
 import json
+import logging
+import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import yaml
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from scripts.utils.logger import setup_logger, log_header, log_subheader
+
+logger = setup_logger(__name__)
 
 try:
     from vllm import LLM, SamplingParams
     import torch
 except ImportError:
-    print("Error: vLLM not installed. Please install with: pip install vllm")
+    logger.error("vLLM not installed. Please install with: pip install vllm")
     exit(1)
 
 
@@ -48,16 +57,35 @@ def count_tokens(text: str, tokenizer) -> int:
 def run_baseline_benchmark(
     config: Dict[str, Any],
     prompts: List[Dict[str, Any]],
-    results_path: Path
+    results_path: Path,
+    log_config: Optional[Dict[str, Any]] = None
 ) -> None:
     """Run baseline inference benchmark."""
     
-    print("=" * 60)
-    print("RAG Prefill-Decode Asymmetry Baseline Benchmark")
-    print("=" * 60)
+    # Configure logger from config if available
+    if log_config is None:
+        log_config = config.get("logging", {})
+    
+    if log_config:
+        level_map = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+        }
+        level = level_map.get(log_config.get("level", "INFO"), logging.INFO)
+        log_dir = Path(log_config.get("log_dir", "logs"))
+        console = log_config.get("console", True)
+        
+        # Reconfigure logger
+        benchmark_logger = setup_logger(f"{__name__}.benchmark", log_dir=log_dir, level=level, console=console)
+    else:
+        benchmark_logger = logger
+    
+    log_header(benchmark_logger, "RAG Prefill-Decode Asymmetry Baseline Benchmark")
     
     # Initialize vLLM engine
-    print(f"\nInitializing vLLM engine with model: {config['model']['name']}")
+    benchmark_logger.info(f"Initializing vLLM engine with model: {config['model']['name']}")
     llm = LLM(
         model=config["model"]["name"],
         dtype=config["model"]["dtype"],
@@ -69,17 +97,19 @@ def run_baseline_benchmark(
     )
     
     tokenizer = llm.get_tokenizer()
+    benchmark_logger.debug("Tokenizer loaded successfully")
     
     # Prepare sampling parameters
     sampling_params = SamplingParams(
         temperature=0.0,
         max_tokens=config["workload"]["decode_length"],
     )
+    benchmark_logger.debug(f"Sampling params: temperature=0.0, max_tokens={config['workload']['decode_length']}")
     
     results = []
     
-    print(f"\nRunning inference on {len(prompts)} prompts...")
-    print("-" * 60)
+    benchmark_logger.info(f"Running inference on {len(prompts)} prompts...")
+    log_subheader(benchmark_logger, "Starting inference", width=60)
     
     for idx, prompt_data in enumerate(prompts):
         prompt = prompt_data["prompt"]
@@ -89,8 +119,8 @@ def run_baseline_benchmark(
         # Count actual tokens
         prompt_tokens = count_tokens(prompt, tokenizer)
         
-        print(f"\n[{idx+1}/{len(prompts)}] Context length: {context_length} tokens "
-              f"(actual: {prompt_tokens} tokens), Sample: {sample_id}")
+        benchmark_logger.info(f"[{idx+1}/{len(prompts)}] Context length: {context_length} tokens "
+                   f"(actual: {prompt_tokens} tokens), Sample: {sample_id}")
         
         # Measure GPU memory before
         if torch.cuda.is_available():
@@ -142,9 +172,9 @@ def run_baseline_benchmark(
         
         results.append(result)
         
-        print(f"  TTFT: {ttft:.3f}s | Total: {total_latency:.3f}s | "
-              f"Throughput: {decode_throughput:.2f} tokens/s | "
-              f"Memory: {peak_memory:.2f} GB")
+        benchmark_logger.info(f"  TTFT: {ttft:.3f}s | Total: {total_latency:.3f}s | "
+                   f"Throughput: {decode_throughput:.2f} tokens/s | "
+                   f"Memory: {peak_memory:.2f} GB")
     
     # Save results
     results_path.parent.mkdir(parents=True, exist_ok=True)
@@ -152,23 +182,21 @@ def run_baseline_benchmark(
         for result in results:
             f.write(json.dumps(result) + "\n")
     
-    print("\n" + "=" * 60)
-    print(f"Benchmark complete! Results saved to {results_path}")
-    print("=" * 60)
+    log_header(benchmark_logger, f"Benchmark complete! Results saved to {results_path}")
     
-    # Print summary statistics
-    print("\nSummary Statistics:")
-    print("-" * 60)
+    # Log summary statistics
+    benchmark_logger.info("Summary Statistics:")
+    log_subheader(benchmark_logger, "", width=60)
     for ctx_len in config["workload"]["context_lengths"]:
         ctx_results = [r for r in results if r["context_length"] == ctx_len]
         if ctx_results:
             avg_ttft = sum(r["ttft"] for r in ctx_results) / len(ctx_results)
             avg_throughput = sum(r["decode_throughput"] for r in ctx_results) / len(ctx_results)
             avg_latency = sum(r["total_latency"] for r in ctx_results) / len(ctx_results)
-            print(f"Context {ctx_len} tokens: "
-                  f"TTFT={avg_ttft:.3f}s, "
-                  f"Throughput={avg_throughput:.2f} tok/s, "
-                  f"Latency={avg_latency:.3f}s")
+            benchmark_logger.info(f"Context {ctx_len} tokens: "
+                       f"TTFT={avg_ttft:.3f}s, "
+                       f"Throughput={avg_throughput:.2f} tok/s, "
+                       f"Latency={avg_latency:.3f}s")
 
 
 if __name__ == "__main__":
@@ -206,6 +234,9 @@ if __name__ == "__main__":
     else:
         results_path = Path(config["output"]["results_dir"]) / config["output"]["filename"]
     
+    # Get log config
+    log_config = config.get("logging")
+    
     # Run benchmark
-    run_baseline_benchmark(config, prompts, results_path)
+    run_baseline_benchmark(config, prompts, results_path, log_config=log_config)
 
