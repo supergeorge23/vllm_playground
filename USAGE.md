@@ -100,6 +100,26 @@ python scripts/run_baseline.py \
 rsync -av user@<lambda-host>:/path/to/project/results/ ./results/
 ```
 
+### 5. 分析结果（本地）
+
+```bash
+# 分析基准测试结果，显示统计摘要
+python scripts/analyze_results.py results/baseline_results.jsonl
+
+# 导出为CSV格式
+python scripts/analyze_results.py results/baseline_results.jsonl --output results/summary.csv
+
+# 只导出CSV，不显示表格
+python scripts/analyze_results.py results/baseline_results.jsonl --output results/summary.csv --quiet
+```
+
+分析脚本会生成以下统计信息：
+- **TTFT (Time to First Token)**: 平均值、最小值、最大值、中位数、标准差
+- **Decode Throughput**: 解码吞吐量统计
+- **Total Latency**: 总延迟统计
+- **GPU Memory**: 内存使用情况
+- 所有指标按上下文长度分组
+
 ## 日志系统
 
 所有脚本都使用统一的logger系统，输出到控制台和日志文件：

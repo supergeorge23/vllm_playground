@@ -73,7 +73,8 @@ Playground/
 ├── scripts/              # Python scripts
 │   ├── workflow.py       # Main workflow orchestrator
 │   ├── generate_rag_prompts.py  # Generate synthetic RAG prompts
-│   └── run_baseline.py   # Baseline inference benchmark
+│   ├── run_baseline.py   # Baseline inference benchmark
+│   └── analyze_results.py  # Analyze benchmark results
 ├── data/                 # Input data (prompts, etc.)
 ├── results/              # Output results (JSONL/CSV)
 ├── requirements.txt      # Python dependencies
@@ -130,6 +131,7 @@ See `USAGE.md` for detailed testing instructions.
 - [x] Project structure and workflow framework
 - [x] Baseline benchmark implementation (Phase 1)
 - [x] Unified logger system with unit tests
+- [x] Results analysis script
 - [ ] Cloud GPU environment ready
 - [ ] Prefill–decode profiling (Phase 2)
 - [ ] System optimization experiments (Phase 3)
