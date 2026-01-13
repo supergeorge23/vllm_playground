@@ -259,10 +259,29 @@ class TestLoggerSetup(unittest.TestCase):
 
     def test_get_logger_creates_new(self):
         """Test that get_logger creates new logger if none exists."""
-        logger = get_logger("new_test")
+        # Use a unique name to avoid conflicts
+        unique_name = f"get_logger_new_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+        logger = get_logger(unique_name)
         
         # Should have handlers (default setup)
         self.assertTrue(len(logger.handlers) > 0, "Should have handlers")
+        
+        # Test that logger actually works by writing a message
+        logger.info("Test message from get_logger")
+        
+        # Verify log file was created and contains the message
+        # (get_logger uses default logs directory)
+        default_log_dir = Path("logs")
+        log_files = list(default_log_dir.glob(f"{unique_name}_*.log"))
+        
+        if log_files:
+            with open(log_files[0], "r") as f:
+                content = f.read()
+                self.assertIn("Test message from get_logger", content)
+            
+            # Clean up
+            for log_file in log_files:
+                log_file.unlink()
 
     def test_log_separator(self):
         """Test log_separator helper function."""
