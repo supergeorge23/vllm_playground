@@ -132,6 +132,9 @@ See `USAGE.md` for detailed testing instructions.
 - [x] Baseline benchmark implementation (Phase 1)
 - [x] Unified logger system with unit tests
 - [x] Results analysis script
-- [ ] Cloud GPU environment ready
+- [x] Cloud GPU environment ready (Lambda Labs A10)
+- [x] Baseline benchmark successfully run
 - [ ] Prefill–decode profiling (Phase 2)
 - [ ] System optimization experiments (Phase 3)
+
+See `NEXT_STEPS.md` for detailed next steps and workflow.

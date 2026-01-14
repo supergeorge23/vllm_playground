@@ -1,26 +1,26 @@
-# Baseline inference configuration for RAG prefill-decode asymmetry study
+# Baseline inference configuration using a public model (for testing)
+# Use this if you don't have LLaMA-3 access yet
 
 model:
-  name: "meta-llama/Meta-Llama-3-8B"
-  dtype: "bfloat16"  # or "float16"
-  max_model_len: 8192  # Maximum context length (LLaMA-3-8B supports up to 8192 tokens)
+  name: "mistralai/Mistral-7B-v0.1"  # Public model, no access required
+  dtype: "bfloat16"
+  max_model_len: 16384
 
 workload:
   # RAG context lengths to test (in tokens)
-  # Note: LLaMA-3-8B max is 8192, so we test up to that limit
   context_lengths: [2048, 4096, 8192]
   # User query length (approximate tokens)
   query_length: 50
   # Decode output length (tokens)
   decode_length: 150
   # Number of samples per context length
-  num_samples: 10
+  num_samples: 5  # Reduced for testing
 
 inference:
   # vLLM engine parameters
   tensor_parallel_size: 1
-  gpu_memory_utilization: 0.85  # Reduced for A10 (24GB) with long contexts
-  max_num_seqs: 32  # Reduced from 256 to fit in memory with 8192 context length
+  gpu_memory_utilization: 0.9
+  max_num_seqs: 256
   enable_prefix_caching: false
 
 measurements:
@@ -35,11 +35,11 @@ measurements:
 
 output:
   results_dir: "results"
-  format: "jsonl"  # or "csv"
-  filename: "baseline_results.jsonl"
+  format: "jsonl"
+  filename: "baseline_results_public.jsonl"
 
 logging:
   log_dir: "logs"
-  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
-  console: true  # Output to console
-  file: true  # Output to file
+  level: "INFO"
+  console: true
+  file: true
